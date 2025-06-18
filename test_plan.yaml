@@ -1,0 +1,5 @@
+# One list item = one action
+- wait_until: resources/start_button.png
+- click:      resources/start_button.png
+- type:       "run 42{ENTER}"
+- assert_seen: resources/sim_complete.png
