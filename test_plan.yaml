@@ -1,5 +1,18 @@
-# One list item = one action
-- wait_until: resources/start_button.png
-- click:      resources/start_button.png
-- type:       "run 42{ENTER}"
-- assert_seen: resources/sim_complete.png
+# fill the two boxes (unchanged)
+- fill:
+    template: resources/label_value.png
+    offset:   [85, 0]
+    text:     "42"
+
+- fill:
+    template: resources/label_speed.png
+    offset:   [85, 0]
+    text:     "75"
+
+# click the Start button with its own threshold
+- click:
+    template:   resources/start_button.png
+    confidence: 0.95            # ← new key
+
+# assert the green message (uses global CONFIDENCE)
+- assert_seen: resources/msg_ok.png
