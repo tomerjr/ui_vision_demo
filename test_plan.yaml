@@ -6,7 +6,7 @@
 
 - fill:
     template: resources/label_speed.png
-    offset:   [85, 0]
+    offset_label_ratio:   [0.3, 0]
     text:     "75"
 
 # click the Start button with its own threshold

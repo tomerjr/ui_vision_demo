@@ -42,6 +42,14 @@ def click_then_type(pos, text):
     pag.hotkey("ctrl", "a")
     pag.typewrite(text, interval=0.05)
 
+def active_window_size() -> tuple[int, int]:
+    """Return (width, height) of the active window; fall back to full screen."""
+    try:
+        win = pag.getActiveWindow()          # works on Win/Mac/Linux in PyAutoGUI ≥ 0.9
+        return win.width, win.height
+    except Exception:
+        return pag.size()                    # fallback: full-screen resolution
+
 # ── the YAML walker ──────────────────────────────────────────────────
 def run_plan(plan_path: pathlib.Path):
     plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
@@ -50,10 +58,26 @@ def run_plan(plan_path: pathlib.Path):
 
         # --- new compound step: fill ----------------------------------
         if action == "fill":
-            tmpl   = ROOT / value["template"]
-            offx, offy = value.get("offset", [0, 0])
-            text   = value["text"]
-            label_pos = wait_for(tmpl, "fill")
+            tmpl = ROOT / value["template"]  # label template (same key name!)
+            text = value["text"]
+            label_pos = wait_for(tmpl, "fill")  # (cx, cy) of the label
+
+            if "offset_ratio" in value:  # relative to window
+                rx, ry = value["offset_ratio"]
+                win_w, win_h = active_window_size()
+                offx, offy = int(rx * win_w), int(ry * win_h)
+
+            elif "offset_label_ratio" in value:  # relative to label image
+                rlx, rly = value["offset_label_ratio"]
+                tmpl_img = cv.imread(str(tmpl), cv.IMREAD_UNCHANGED)
+                if tmpl_img.shape[2] == 4:  # drop alpha if any
+                    tmpl_img = cv.cvtColor(tmpl_img, cv.COLOR_BGRA2BGR)
+                h_lbl, w_lbl = tmpl_img.shape[:2]
+                offx, offy = int(rlx * w_lbl), int(rly * h_lbl)
+
+            else:  # fixed pixels fallback
+                offx, offy = value.get("offset", [0, 0])
+
             target = (label_pos[0] + offx, label_pos[1] + offy)
             click_then_type(target, text)
             continue
